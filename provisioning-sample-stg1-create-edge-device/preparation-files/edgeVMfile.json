@@ -1,0 +1,5 @@
+{
+    "edge_private_IP": "<edge-device-ipaddr>",
+    "edge_FQDN": "<edge-device-fqdn>",
+    "resource_group_name": "<resource-group-name>"
+}  

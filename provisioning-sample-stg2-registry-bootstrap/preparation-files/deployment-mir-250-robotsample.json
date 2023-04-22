@@ -1,0 +1,121 @@
+{
+  "modulesContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.1",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": "",
+            "registryCredentials": {
+              "${contianer-registry-name}": {
+                "username": "${contianer-registry-username}",
+                "password": "${contianer-registry-password}",
+                "address": "${contianer-registry-address}"
+              }
+            }
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-agent:1.4",
+              "createOptions": "{}"
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "startupOrder": 0,
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-hub:1.4",
+              "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
+            }
+          }
+        },
+        "modules": {
+          "robot_control": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "imagePullPolicy": "on-create",
+            "startupOrder": 1,
+            "env": {
+              "ENV_ROBOT_NAME": {
+                "value": "MiR250_001"
+              },
+              "ENV_ROBOT_TYPE": {
+                "value": "mir"
+              }
+            },
+            "settings": {
+              "image": "${robot-control-container-image}",
+              "createOptions": "{\"NetworkingConfig\":{\"EndpointsConfig\":{\"host\":{}}},\"HostConfig\":{\"NetworkMode\":\"host\"}}"
+            }
+          },
+          "ros_iot_edge_interface": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "imagePullPolicy": "on-create",
+            "startupOrder": 2,
+            "env": {
+              "ENV_ROBOT_NAME": {
+                "value": "MiR250_001"
+              },
+              "ENV_ROBOT_MODULE_CONN_STR": {
+                "value": "${module-connection-string}"
+              }
+            },
+            "settings": {
+              "image": "${ros-interface-container-image}",
+              "createOptions": "{\"NetworkingConfig\":{\"EndpointsConfig\":{\"host\":{}}},\"HostConfig\":{\"NetworkMode\":\"host\"}}"
+            }
+          },
+          "IoTEdgeMetricsCollector": {
+            "env": {
+              "ResourceId": {
+                "value": "${ResourceId}"
+              },
+              "UploadTarget": {
+                "value": "AzureMonitor"
+              },
+              "LogAnalyticsWorkspaceId": {
+                "value": "${LogAnalyticsWorkspaceId}"
+              },
+              "LogAnalyticsSharedKey": {
+                "value": "${LogAnalyticsSharedKey}"
+              }
+            },
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-metrics-collector:1.0"
+            },
+            "status": "running",
+            "type": "docker"
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.1",
+        "routes": {
+          "InterfaceToIoTHub": "FROM /messages/modules/ros_iot_edge_interface/outputs/* INTO $upstream"
+        },
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    },
+    "robot_control": {
+      "properties.desired": {}
+    },
+    "ros_iot_edge_interface": {
+      "properties.desired": {}
+    }
+  }
+}
